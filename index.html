@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KATI OS — Agent Command Center</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Clash+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg: #07080a;
+  --surface: #0d0f13;
+  --surface2: #13161c;
+  --surface3: #191d25;
+  --border: #1e2330;
+  --border2: #252b38;
+  --text: #e2e5ed;
+  --text2: #8b92a5;
+  --text3: #555e72;
+  --accent: #4fffb0;
+  --accent-dim: rgba(79,255,176,0.08);
+  --accent-glow: rgba(79,255,176,0.15);
+  --amber: #ffb347;
+  --amber-dim: rgba(255,179,71,0.08);
+  --blue: #5b8dee;
+  --blue-dim: rgba(91,141,238,0.08);
+  --rose: #ff6b8a;
+  --rose-dim: rgba(255,107,138,0.08);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  overflow: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* ── LAYOUT ── */
+.os {
+  display: grid;
+  grid-template-rows: 52px 1fr;
+  grid-template-columns: 260px 1fr;
+  height: 100vh;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  z-index: 10;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.os-logo {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.os-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border2);
+}
+
+.os-subtitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--text3);
+  letter-spacing: 0.06em;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(79,255,176,0.2);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+
+.pulse {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulseAnim 2s ease-in-out infinite;
+}
+
+@keyframes pulseAnim {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+.time-display {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--text3);
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.venture-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.v-tab {
+  flex: 1;
+  padding: 5px 4px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: none;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
+.v-tab:hover { color: var(--text2); border-color: var(--border2); }
+.v-tab.active { background: var(--accent-dim); border-color: rgba(79,255,176,0.25); color: var(--accent); }
+
+.agents-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.agents-list::-webkit-scrollbar { width: 3px; }
+.agents-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.agent-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.agent-item:hover {
+  background: var(--surface2);
+  border-color: var(--border);
+}
+
+.agent-item.active {
+  background: var(--surface3);
+  border-color: var(--border2);
+}
+
+.agent-item.active.buddy-active {
+  background: var(--accent-dim);
+  border-color: rgba(79,255,176,0.2);
+}
+
+.agent-avatar {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.agent-info { flex: 1; min-width: 0; }
+
+.agent-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.agent-role {
+  font-size: 0.65rem;
+  color: var(--text3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'DM Mono', monospace;
+}
+
+.agent-status {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── MAIN AREA ── */
+.main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ── AGENT HEADER ── */
+.agent-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.agent-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.agent-header-avatar {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.agent-header-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.agent-header-desc {
+  font-size: 0.72rem;
+  color: var(--text2);
+  font-family: 'DM Mono', monospace;
+}
+
+.agent-header-right {
+  display: flex;
+  gap: 8px;
+}
+
+.header-btn {
+  padding: 6px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--border2);
+  background: none;
+  color: var(--text2);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.04em;
+}
+
+.header-btn:hover { border-color: var(--accent); color: var(--accent); }
+.header-btn.primary {
+  background: var(--accent-dim);
+  border-color: rgba(79,255,176,0.3);
+  color: var(--accent);
+}
+
+/* ── CHAT ── */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chat-area::-webkit-scrollbar { width: 3px; }
+.chat-area::-webkit-scrollbar-thumb { background: var(--border2); }
+
+/* Welcome screen */
+.welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 40px;
+  animation: fadeIn 0.4s ease;
+}
+
+.welcome-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+  filter: grayscale(0.2);
+}
+
+.welcome-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.welcome-desc {
+  font-size: 0.85rem;
+  color: var(--text2);
+  max-width: 380px;
+  line-height: 1.6;
+}
+
+.quick-prompts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.qp-btn {
+  padding: 10px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 0.75rem;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.qp-btn:hover { border-color: var(--accent); color: var(--text); background: var(--surface3); }
+
+/* Messages */
+.msg {
+  display: flex;
+  gap: 12px;
+  animation: fadeUp 0.25s ease;
+  max-width: 780px;
+}
+
+.msg.user-msg {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.msg-avatar {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.bubble {
+  padding: 12px 16px;
+  border-radius: 4px 12px 12px 12px;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  max-width: 680px;
+}
+
+.user-msg .bubble {
+  border-radius: 12px 4px 12px 12px;
+  background: var(--surface2);
+  border-color: var(--border2);
+}
+
+.bubble strong { color: var(--accent); font-weight: 600; }
+.bubble code {
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--amber);
+}
+
+.msg-sender {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  color: var(--text3);
+  margin-bottom: 5px;
+  letter-spacing: 0.06em;
+}
+
+/* Typing */
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.td {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  animation: tdBounce 1.2s ease-in-out infinite;
+}
+
+.td:nth-child(2) { animation-delay: 0.15s; }
+.td:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes tdBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* ── INPUT BAR ── */
+.input-bar {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.input-wrap {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 11px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  transition: border-color 0.2s;
+}
+
+.input-wrap:focus-within { border-color: rgba(79,255,176,0.3); }
+
+#msgInput {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  resize: none;
+  max-height: 100px;
+  line-height: 1.5;
+}
+
+#msgInput::placeholder { color: var(--text3); }
+
+.send-btn {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #07080a;
+  font-size: 0.9rem;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+.send-btn:hover { background: #6fffbf; transform: scale(1.05); }
+.send-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+/* ── API KEY BANNER ── */
+.api-banner {
+  background: rgba(255,179,71,0.06);
+  border-bottom: 1px solid rgba(255,179,71,0.15);
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.75rem;
+  color: var(--amber);
+  font-family: 'DM Mono', monospace;
+  flex-shrink: 0;
+}
+
+.api-banner input {
+  flex: 1;
+  background: rgba(255,179,71,0.08);
+  border: 1px solid rgba(255,179,71,0.2);
+  border-radius: 6px;
+  padding: 4px 10px;
+  color: var(--amber);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  outline: none;
+  max-width: 320px;
+}
+
+.api-banner input::placeholder { color: rgba(255,179,71,0.4); }
+
+.api-save-btn {
+  background: rgba(255,179,71,0.12);
+  border: 1px solid rgba(255,179,71,0.25);
+  border-radius: 6px;
+  padding: 4px 12px;
+  color: var(--amber);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.api-save-btn:hover { background: rgba(255,179,71,0.2); }
+
+/* ── SYSTEM MESSAGE ── */
+.sys-msg {
+  align-self: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--text3);
+  letter-spacing: 0.06em;
+}
+
+/* ── DASHBOARD VIEW ── */
+.dashboard {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+
+.dashboard::-webkit-scrollbar { width: 3px; }
+.dashboard::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.dash-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.dash-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+.dash-card:hover::before { opacity: 1; }
+
+.dash-card-avatar {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.dash-card-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.dash-card-role {
+  font-size: 0.68rem;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.dash-card-venture {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.dash-chat-btn {
+  width: 100%;
+  padding: 7px;
+  border-radius: 7px;
+  border: 1px solid var(--border2);
+  background: none;
+  color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.04em;
+}
+
+.dash-chat-btn:hover { color: var(--accent); border-color: rgba(79,255,176,0.3); }
+
+/* View toggle */
+.view-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.vt-btn {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border2);
+  background: none;
+  color: var(--text3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: all 0.15s;
+}
+
+.vt-btn.active, .vt-btn:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="os">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="os-logo">KATI OS</span>
+      <div class="os-divider"></div>
+      <span class="os-subtitle">AGENT COMMAND CENTER</span>
+    </div>
+    <div class="topbar-right">
+      <div class="view-toggle">
+        <button class="vt-btn active" id="chatViewBtn" onclick="setView('chat')" title="Chat View">💬</button>
+        <button class="vt-btn" id="dashViewBtn" onclick="setView('dashboard')" title="Dashboard">⊞</button>
+      </div>
+      <div class="status-pill">
+        <div class="pulse"></div>
+        <span id="onlineCount">17 AGENTS ONLINE</span>
+      </div>
+      <div class="time-display" id="clock">--:--</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-label">Filter by venture</div>
+      <div class="venture-tabs">
+        <button class="v-tab active" onclick="filterVenture('all', this)">All</button>
+        <button class="v-tab" onclick="filterVenture('moltforce', this)">MF</button>
+        <button class="v-tab" onclick="filterVenture('aios', this)">AIOS</button>
+        <button class="v-tab" onclick="filterVenture('onesport', this)">OS</button>
+        <button class="v-tab" onclick="filterVenture('core', this)">Core</button>
+      </div>
+    </div>
+    <div class="agents-list" id="agentsList"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="mainArea">
+
+    <!-- API Banner -->
+    <div class="api-banner" id="apiBanner">
+      <span>⚡</span>
+      <span>API KEY REQUIRED —</span>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." />
+      <button class="api-save-btn" onclick="saveApiKey()">SAVE & ACTIVATE</button>
+    </div>
+
+    <!-- Agent Header -->
+    <div class="agent-header" id="agentHeader" style="display:none">
+      <div class="agent-header-left">
+        <div class="agent-header-avatar" id="headerAvatar"></div>
+        <div>
+          <div class="agent-header-name" id="headerName"></div>
+          <div class="agent-header-desc" id="headerDesc"></div>
+        </div>
+      </div>
+      <div class="agent-header-right">
+        <button class="header-btn" onclick="clearChat()">CLEAR</button>
+        <button class="header-btn primary" onclick="setView('dashboard')">ALL AGENTS</button>
+      </div>
+    </div>
+
+    <!-- Chat / Dashboard -->
+    <div class="chat-area" id="chatArea" style="display:none"></div>
+    <div class="dashboard" id="dashboardArea" style="display:none"></div>
+
+    <!-- Landing when no agent selected -->
+    <div class="welcome" id="landingArea">
+      <div class="welcome-icon">🤖</div>
+      <div class="welcome-name">Welcome to KATI OS</div>
+      <div class="welcome-desc">Your personal AI agent command center. Select an agent from the sidebar to start chatting, or view your full team in the dashboard.</div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button class="header-btn primary" onclick="setView('dashboard')">⊞ View All Agents</button>
+        <button class="header-btn" onclick="selectAgent('buddy')">💬 Open Buddy</button>
+      </div>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="input-bar" id="inputBar" style="display:none">
+      <div class="input-wrap">
+        <textarea id="msgInput" rows="1" placeholder="Message your agent..."
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      </div>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── AGENT DATA ──
+const AGENTS = [
+  {
+    id: 'buddy', num: '01', name: 'Buddy', emoji: '🤖',
+    role: 'Business Coordinator', fullRole: 'Chief orchestrator — routes work between all agents, tracks progress, clarifies goals',
+    venture: 'core', color: '#4fffb0', bg: 'rgba(79,255,176,0.12)',
+    systemPrompt: `You are Buddy, Kati's AI Business Coordinator and the lead agent of KATI OS. You orchestrate all other specialist agents and serve as Kati's first point of contact for everything.
+
+ABOUT KATI:
+- Solopreneur running three ventures: AI One Stop Shop (aionestop.shop), MoltForce (AI agents hire human workers via blockchain/USDC on Base), and oneSport (safety-first outdoor adventure app, scuba diving MVP)
+- Background: network operations, telecom, technical recruiting, executive support
+- PADI Divemaster based in Washington State
+- 16 Claude agents in her AI OS: Buddy, Bizzy, Scouty, Brandy, Techie, Secura, Penny, Lexi, Rizk, Opal, Adley, Convo, Metrix, Mingle, Scalee, Seed
+- Intermediate beginner with AI — prefers clear, structured explanations
+- Methodical, research-driven decision maker
+
+YOUR ROLE: Clarify what Kati is trying to achieve, break goals into tasks, route work to the right specialist agent, keep everything coherent. Be friendly, concise, and reassuring. Always help her know where things stand across all three ventures.`
+  },
+  {
+    id: 'bizzy', num: '02', name: 'Bizzy', emoji: '📊',
+    role: 'Business Strategy', fullRole: 'Business strategy, competitive analysis, market research, venture planning',
+    venture: 'core', color: '#5b8dee', bg: 'rgba(91,141,238,0.12)',
+    systemPrompt: `You are Bizzy, Kati's Business Strategy Agent in KATI OS. You handle business strategy, competitive analysis, market research, and venture planning across all three of Kati's ventures: AI One Stop Shop, MoltForce, and oneSport. Be analytical, direct, and actionable.`
+  },
+  {
+    id: 'scouty', num: '03', name: 'Scouty', emoji: '🔍',
+    role: 'Research & Intel', fullRole: 'Market intelligence, competitor research, trend spotting, opportunity scouting',
+    venture: 'core', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)',
+    systemPrompt: `You are Scouty, Kati's Research & Intelligence Agent in KATI OS. You handle market research, competitor analysis, trend spotting, and opportunity scouting. Kati runs AI One Stop Shop, MoltForce, and oneSport. Be thorough and present findings clearly.`
+  },
+  {
+    id: 'brandy', num: '04', name: 'Brandy', emoji: '🎨',
+    role: 'Brand & Marketing', fullRole: 'Brand voice, marketing copy, content strategy, positioning across all ventures',
+    venture: 'aios', color: '#ff6b8a', bg: 'rgba(255,107,138,0.12)',
+    systemPrompt: `You are Brandy, Kati's Brand & Marketing Agent in KATI OS. You handle brand voice, marketing copy, content strategy, and positioning for AI One Stop Shop, MoltForce, and oneSport. Help Kati sound compelling and consistent across all her ventures.`
+  },
+  {
+    id: 'techie', num: '05', name: 'Techie', emoji: '⚙️',
+    role: 'Tech & Dev', fullRole: 'Technical architecture, code review, dev sprint planning, stack decisions',
+    venture: 'moltforce', color: '#4fffb0', bg: 'rgba(79,255,176,0.12)',
+    systemPrompt: `You are Techie, Kati's Technical Agent in KATI OS. You handle technical architecture, code review, sprint planning, and tech stack decisions. Key context: MoltForce runs on Next.js/Supabase/Vercel, oneSport is the same stack, Kati uses n8n for automation and has 16 Claude agents. She's an intermediate beginner — explain things clearly.`
+  },
+  {
+    id: 'secura', num: '06', name: 'Secura', emoji: '🛡️',
+    role: 'Security & Risk', fullRole: 'Security audits, risk assessment, compliance, prompt injection protection',
+    venture: 'moltforce', color: '#ffb347', bg: 'rgba(255,179,71,0.12)',
+    systemPrompt: `You are Secura, Kati's Security & Risk Agent in KATI OS. You handle security audits, risk assessment, compliance, and protection against threats like prompt injection. MoltForce handles USDC payments on Base blockchain — security is critical. Be thorough and specific.`
+  },
+  {
+    id: 'penny', num: '07', name: 'Penny', emoji: '💰',
+    role: 'Finance & Revenue', fullRole: 'Revenue modeling, pricing strategy, financial planning, payment systems',
+    venture: 'core', color: '#4fffb0', bg: 'rgba(79,255,176,0.12)',
+    systemPrompt: `You are Penny, Kati's Finance & Revenue Agent in KATI OS. You handle revenue modeling, pricing strategy, financial planning, and payment systems. Kati's ventures: AI One Stop Shop (affiliate/subscription), MoltForce (marketplace fees + USDC), oneSport (freemium app). Help her build sustainable revenue models.`
+  },
+  {
+    id: 'lexi', num: '08', name: 'Lexi', emoji: '✍️',
+    role: 'Content & Copy', fullRole: 'Blog posts, email sequences, landing page copy, social media content',
+    venture: 'aios', color: '#ff6b8a', bg: 'rgba(255,107,138,0.12)',
+    systemPrompt: `You are Lexi, Kati's Content & Copy Agent in KATI OS. You write blog posts, email sequences, landing page copy, and social media content for AI One Stop Shop, MoltForce, and oneSport. Match each venture's tone and audience. Be engaging and conversion-focused.`
+  },
+  {
+    id: 'rizk', num: '09', name: 'Rizk', emoji: '⚠️',
+    role: 'Risk & Compliance', fullRole: 'Legal risk, regulatory compliance, terms of service, liability assessment',
+    venture: 'moltforce', color: '#ffb347', bg: 'rgba(255,179,71,0.12)',
+    systemPrompt: `You are Rizk, Kati's Risk & Compliance Agent in KATI OS. You handle legal risk, regulatory compliance, terms of service, and liability assessment. MoltForce involves AI agents hiring humans with crypto payments — this has specific compliance considerations. Be clear but note you're not a lawyer.`
+  },
+  {
+    id: 'opal', num: '10', name: 'Opal', emoji: '🌊',
+    role: 'oneSport Lead', fullRole: 'oneSport product strategy, dive safety features, adventure sport integration',
+    venture: 'onesport', color: '#5b8dee', bg: 'rgba(91,141,238,0.12)',
+    systemPrompt: `You are Opal, Kati's oneSport Lead Agent in KATI OS. oneSport is a safety-first outdoor adventure app with scuba diving as MVP, targeting June 2026 public launch. Kati is a PADI Divemaster in Washington State. You handle product strategy, safety feature design, and sport integration planning.`
+  },
+  {
+    id: 'adley', num: '11', name: 'Adley', emoji: '📱',
+    role: 'Product & UX', fullRole: 'Product design, user experience, feature prioritization, roadmap management',
+    venture: 'onesport', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)',
+    systemPrompt: `You are Adley, Kati's Product & UX Agent in KATI OS. You handle product design, user experience, feature prioritization, and roadmap management across MoltForce and oneSport. Think from the user's perspective and help Kati make smart product decisions.`
+  },
+  {
+    id: 'convo', num: '12', name: 'Convo', emoji: '💬',
+    role: 'Community & Comms', fullRole: 'Community building, social media strategy, partnership outreach, PR',
+    venture: 'aios', color: '#ff6b8a', bg: 'rgba(255,107,138,0.12)',
+    systemPrompt: `You are Convo, Kati's Community & Communications Agent in KATI OS. You handle community building, social media strategy, partnership outreach, and PR for all three ventures. Help Kati build audiences and relationships authentically.`
+  },
+  {
+    id: 'metrix', num: '13', name: 'Metrix', emoji: '📈',
+    role: 'Analytics & Data', fullRole: 'KPI tracking, growth metrics, data analysis, performance reporting',
+    venture: 'core', color: '#5b8dee', bg: 'rgba(91,141,238,0.12)',
+    systemPrompt: `You are Metrix, Kati's Analytics & Data Agent in KATI OS. You handle KPI tracking, growth metrics, data analysis, and performance reporting across AI One Stop Shop, MoltForce, and oneSport. Help Kati understand what's working and what needs attention.`
+  },
+  {
+    id: 'mingle', num: '14', name: 'Mingle', emoji: '🤝',
+    role: 'Partnerships & BD', fullRole: 'Business development, partnership strategy, affiliate programs, ecosystem growth',
+    venture: 'aios', color: '#4fffb0', bg: 'rgba(79,255,176,0.12)',
+    systemPrompt: `You are Mingle, Kati's Partnerships & Business Development Agent in KATI OS. You handle partnership strategy, affiliate programs, and ecosystem growth — especially for AI One Stop Shop's affiliate model and MoltForce's enterprise relationships.`
+  },
+  {
+    id: 'scalee', num: '15', name: 'Scalee', emoji: '🚀',
+    role: 'Growth & Scale', fullRole: 'Growth strategy, user acquisition, retention, scaling operations',
+    venture: 'moltforce', color: '#ffb347', bg: 'rgba(255,179,71,0.12)',
+    systemPrompt: `You are Scalee, Kati's Growth & Scaling Agent in KATI OS. You handle growth strategy, user acquisition, retention, and scaling operations. Focus especially on MoltForce's demand-first launch strategy and getting the first 100 agent users and human workers.`
+  },
+  {
+    id: 'seed', num: '16', name: 'Seed', emoji: '🌱',
+    role: 'Content Seeding', fullRole: 'Marketplace seeding, job templates, initial content strategy, cold-start problem',
+    venture: 'moltforce', color: '#4fffb0', bg: 'rgba(79,255,176,0.12)',
+    systemPrompt: `You are Seed, Kati's Content Seeding Agent in KATI OS. You handle marketplace seeding, job templates, initial content strategy, and solving the cold-start problem for MoltForce. The platform has 15 seeded job templates — help Kati grow from there to real organic listings.`
+  }
+];
+
+const VENTURE_COLORS = {
+  core: { color: '#4fffb0', bg: 'rgba(79,255,176,0.1)', label: 'CORE' },
+  moltforce: { color: '#ffb347', bg: 'rgba(255,179,71,0.1)', label: 'MOLTFORCE' },
+  aios: { color: '#ff6b8a', bg: 'rgba(255,107,138,0.1)', label: 'AI ONE STOP' },
+  onesport: { color: '#5b8dee', bg: 'rgba(91,141,238,0.1)', label: 'ONESPORT' }
+};
+
+// ── STATE ──
+let currentAgent = null;
+let conversations = {};
+let apiKey = localStorage.getItem('kati_os_api_key') || '';
+let currentView = 'landing';
+let currentFilter = 'all';
+
+// ── INIT ──
+function init() {
+  renderSidebar();
+  renderDashboard();
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  if (apiKey) {
+    document.getElementById('apiBanner').style.display = 'none';
+  }
+
+  // Start on landing
+  showLanding();
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+// ── SIDEBAR ──
+function renderSidebar() {
+  const list = document.getElementById('agentsList');
+  const filtered = currentFilter === 'all'
+    ? AGENTS
+    : AGENTS.filter(a => a.venture === currentFilter);
+
+  list.innerHTML = filtered.map(agent => {
+    const vc = VENTURE_COLORS[agent.venture];
+    const isActive = currentAgent?.id === agent.id;
+    return `
+      <div class="agent-item ${isActive ? 'active' : ''} ${isActive && agent.id === 'buddy' ? 'buddy-active' : ''}"
+           onclick="selectAgent('${agent.id}')" id="sidebar-${agent.id}">
+        <div class="agent-avatar" style="background:${agent.bg};color:${agent.color}">
+          ${agent.emoji}
+        </div>
+        <div class="agent-info">
+          <div class="agent-name">${agent.name}</div>
+          <div class="agent-role">${agent.role}</div>
+        </div>
+        <div class="agent-status" style="background:${agent.color};opacity:0.7"></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterVenture(venture, btn) {
+  currentFilter = venture;
+  document.querySelectorAll('.v-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderSidebar();
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const dash = document.getElementById('dashboardArea');
+  dash.innerHTML = AGENTS.map(agent => {
+    const vc = VENTURE_COLORS[agent.venture];
+    return `
+      <div class="dash-card" onclick="selectAgent('${agent.id}')"
+           style="--card-color:${agent.color}">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:${agent.color};opacity:0.5;border-radius:12px 12px 0 0"></div>
+        <div class="dash-card-avatar" style="background:${agent.bg};color:${agent.color}">
+          ${agent.emoji}
+        </div>
+        <div class="dash-card-name">${agent.name}</div>
+        <div class="dash-card-role">${agent.role}</div>
+        <div class="dash-card-venture" style="background:${vc.bg};color:${vc.color}">
+          ${vc.label}
+        </div>
+        <button class="dash-chat-btn">💬 Open Chat</button>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── VIEW MANAGEMENT ──
+function setView(view) {
+  const chatArea = document.getElementById('chatArea');
+  const dashArea = document.getElementById('dashboardArea');
+  const landingArea = document.getElementById('landingArea');
+  const inputBar = document.getElementById('inputBar');
+  const agentHeader = document.getElementById('agentHeader');
+  const chatBtn = document.getElementById('chatViewBtn');
+  const dashBtn = document.getElementById('dashViewBtn');
+
+  chatArea.style.display = 'none';
+  dashArea.style.display = 'none';
+  landingArea.style.display = 'none';
+  inputBar.style.display = 'none';
+  agentHeader.style.display = 'none';
+
+  if (view === 'chat' && currentAgent) {
+    agentHeader.style.display = 'flex';
+    chatArea.style.display = 'flex';
+    inputBar.style.display = 'flex';
+    chatBtn.classList.add('active');
+    dashBtn.classList.remove('active');
+    currentView = 'chat';
+  } else if (view === 'dashboard') {
+    dashArea.style.display = 'grid';
+    chatBtn.classList.remove('active');
+    dashBtn.classList.add('active');
+    currentView = 'dashboard';
+  } else {
+    landingArea.style.display = 'flex';
+    currentView = 'landing';
+  }
+}
+
+function showLanding() {
+  setView('landing');
+}
+
+// ── SELECT AGENT ──
+function selectAgent(agentId) {
+  currentAgent = AGENTS.find(a => a.id === agentId);
+  if (!currentAgent) return;
+
+  // Update sidebar
+  document.querySelectorAll('.agent-item').forEach(el => {
+    el.classList.remove('active', 'buddy-active');
+  });
+  const sidebarItem = document.getElementById(`sidebar-${agentId}`);
+  if (sidebarItem) {
+    sidebarItem.classList.add('active');
+    if (agentId === 'buddy') sidebarItem.classList.add('buddy-active');
+  }
+
+  // Update header
+  document.getElementById('headerAvatar').innerHTML = currentAgent.emoji;
+  document.getElementById('headerAvatar').style.background = currentAgent.bg;
+  document.getElementById('headerAvatar').style.color = currentAgent.color;
+  document.getElementById('headerName').textContent = currentAgent.name;
+  document.getElementById('headerDesc').textContent = currentAgent.fullRole;
+
+  // Init conversation
+  if (!conversations[agentId]) {
+    conversations[agentId] = [];
+  }
+
+  // Render chat
+  renderChat();
+  setView('chat');
+
+  // Show welcome if empty
+  if (conversations[agentId].length === 0) {
+    showAgentWelcome();
+  }
+
+  // Focus input
+  setTimeout(() => document.getElementById('msgInput')?.focus(), 100);
+}
+
+function showAgentWelcome() {
+  const area = document.getElementById('chatArea');
+  const agent = currentAgent;
+  const vc = VENTURE_COLORS[agent.venture];
+
+  const quickPrompts = getQuickPrompts(agent.id);
+
+  area.innerHTML = `
+    <div class="welcome" style="animation:fadeIn 0.3s ease">
+      <div class="welcome-icon">${agent.emoji}</div>
+      <div class="welcome-name" style="color:${agent.color}">${agent.name}</div>
+      <div class="welcome-desc">${agent.fullRole}</div>
+      <div class="quick-prompts-grid">
+        ${quickPrompts.map(p => `
+          <button class="qp-btn" onclick="sendQuick('${p.replace(/'/g, "\\'")}')">
+            ${p}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function getQuickPrompts(agentId) {
+  const prompts = {
+    buddy: ["What should I focus on today?", "Give me a status update on all three ventures", "What's the highest priority task for MoltForce?", "Help me decide what to work on next"],
+    bizzy: ["Analyze MoltForce's competitive position", "What's the biggest strategic risk right now?", "Help me think through oneSport's market timing", "Review AI One Stop Shop's business model"],
+    scouty: ["Research MoltForce competitors", "What are the latest trends in AI agent infrastructure?", "Find potential partners for AI One Stop Shop", "Who are the top players in adventure safety apps?"],
+    brandy: ["Write MoltForce launch copy", "Create an AI One Stop Shop tagline", "Draft social posts for MoltForce launch", "Develop oneSport's brand voice"],
+    techie: ["Review MoltForce's current tech stack", "What should I build next for oneSport?", "Help me plan the n8n automation workflow", "Troubleshoot a MoltForce issue"],
+    secura: ["Audit MoltForce's payment security", "What are the prompt injection risks?", "Review USDC payment flow security", "What compliance do I need for MoltForce?"],
+    penny: ["Model MoltForce's revenue at 100 users", "Review AI One Stop Shop pricing tiers", "What's the break-even for oneSport?", "How should I think about MoltForce fees?"],
+    lexi: ["Write a Show HN post for MoltForce", "Draft a welcome email for MoltForce agents", "Create oneSport App Store description", "Write AI One Stop Shop newsletter"],
+    rizk: ["What legal risks does MoltForce face?", "Do I need terms of service updates?", "What GDPR considerations apply?", "Review crypto payment compliance"],
+    opal: ["Plan oneSport's next sprint", "What safety features are most important?", "How should I expand beyond scuba?", "Design the dive trip planning flow"],
+    adley: ["Prioritize MoltForce's next features", "Review the oneSport UX flow", "What should I cut from the roadmap?", "Design the MoltForce worker onboarding"],
+    convo: ["Plan MoltForce community launch", "Develop AI One Stop Shop social strategy", "Write Hacker News post for MoltForce", "Build oneSport beta community"],
+    metrix: ["Define MoltForce launch KPIs", "What metrics matter for AI One Stop Shop?", "Set up oneSport success metrics", "Review MoltForce's current traction"],
+    mingle: ["Find AI One Stop Shop affiliate partners", "Identify MoltForce integration partners", "Plan oneSport dive shop partnerships", "Develop AI One Stop Shop's referral program"],
+    scalee: ["Plan MoltForce's first 100 users", "How do I scale from 0 to marketplace liquidity?", "What's the growth playbook for MoltForce?", "Fix the cold-start problem"],
+    seed: ["Review MoltForce's 15 seeded jobs", "Create more job templates for MoltForce", "How do I convert seeded jobs to real ones?", "What job categories should I add?"]
+  };
+  return prompts[agentId] || ["How can you help me?", "What should I focus on?", "Give me your top recommendation", "What do you know about my ventures?"];
+}
+
+function renderChat() {
+  if (!currentAgent) return;
+  const area = document.getElementById('chatArea');
+  const msgs = conversations[currentAgent.id] || [];
+
+  if (msgs.length === 0) {
+    showAgentWelcome();
+    return;
+  }
+
+  area.innerHTML = msgs.map(msg => {
+    if (msg.role === 'user') {
+      return `
+        <div class="msg user-msg">
+          <div class="msg-avatar" style="background:rgba(255,255,255,0.06);color:#8b92a5">K</div>
+          <div>
+            <div class="msg-sender" style="text-align:right">KATI</div>
+            <div class="bubble">${escHtml(msg.content)}</div>
+          </div>
+        </div>`;
+    } else {
+      return `
+        <div class="msg">
+          <div class="msg-avatar" style="background:${currentAgent.bg};color:${currentAgent.color}">${currentAgent.emoji}</div>
+          <div>
+            <div class="msg-sender" style="color:${currentAgent.color}">${currentAgent.name.toUpperCase()}</div>
+            <div class="bubble">${formatMsg(msg.content)}</div>
+          </div>
+        </div>`;
+    }
+  }).join('');
+
+  area.scrollTop = area.scrollHeight;
+}
+
+// ── MESSAGING ──
+function sendQuick(text) {
+  document.getElementById('msgInput').value = text;
+  sendMessage();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text || !currentAgent) return;
+
+  if (!apiKey) {
+    showApiBanner();
+    return;
+  }
+
+  input.value = '';
+  autoResize(input);
+
+  // Add user message
+  conversations[currentAgent.id].push({ role: 'user', content: text });
+  renderChat();
+
+  // Show typing
+  const typingId = showTyping();
+  document.getElementById('sendBtn').disabled = true;
+
+  try {
+    const msgs = conversations[currentAgent.id].map(m => ({
+      role: m.role,
+      content: m.content
+    }));
+
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: currentAgent.systemPrompt,
+        messages: msgs,
+        apiKey: apiKey
+      })
+    });
+
+    const data = await res.json();
+    removeTyping(typingId);
+
+    if (!res.ok) {
+      const errMsg = data.error || JSON.stringify(data);
+      conversations[currentAgent.id].push({ role: 'assistant', content: `⚠️ API Error (${res.status}): ${errMsg}` });
+      renderChat();
+      return;
+    }
+
+    const reply = data.content?.map(b => b.text || '').join('') || '⚠️ No response received.';
+    conversations[currentAgent.id].push({ role: 'assistant', content: reply });
+    renderChat();
+
+  } catch (e) {
+    removeTyping(typingId);
+    conversations[currentAgent.id].push({ role: 'assistant', content: `⚠️ Error: ${e.message}. If this keeps happening, check your Vercel deployment logs at vercel.com/dashboard.` });
+    renderChat();
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function showTyping() {
+  const area = document.getElementById('chatArea');
+  const id = 'typing-' + Date.now();
+  const el = document.createElement('div');
+  el.className = 'msg';
+  el.id = id;
+  el.innerHTML = `
+    <div class="msg-avatar" style="background:${currentAgent.bg};color:${currentAgent.color}">${currentAgent.emoji}</div>
+    <div class="bubble">
+      <div class="typing-dots">
+        <div class="td" style="background:${currentAgent.color}"></div>
+        <div class="td" style="background:${currentAgent.color}"></div>
+        <div class="td" style="background:${currentAgent.color}"></div>
+      </div>
+    </div>`;
+  area.appendChild(el);
+  area.scrollTop = area.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) {
+  document.getElementById(id)?.remove();
+}
+
+function clearChat() {
+  if (!currentAgent) return;
+  conversations[currentAgent.id] = [];
+  showAgentWelcome();
+}
+
+// ── API KEY ──
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) return;
+  apiKey = key;
+  localStorage.setItem('kati_os_api_key', key);
+  document.getElementById('apiBanner').style.display = 'none';
+}
+
+function showApiBanner() {
+  document.getElementById('apiBanner').style.display = 'flex';
+  document.getElementById('apiKeyInput').focus();
+}
+
+// ── UTILS ──
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatMsg(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+init();
+</script>
+</body>
+</html>
